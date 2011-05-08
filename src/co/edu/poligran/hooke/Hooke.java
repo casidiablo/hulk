@@ -24,7 +24,11 @@ public class Hooke extends PApplet {
     private float bigBoxSize;
     private boolean movingBox;
     private float springHeight;
-
+    private float equilibriumPoint;
+    private float xtfutura;
+    private float vtfutura;
+    private boolean hooking;
+    private long lastTick;
     @Override
     public void setup() {
         try {
@@ -39,17 +43,27 @@ public class Hooke extends PApplet {
         bigBoxSize = width * TAM_BIG_BOX_FACTOR;
         floorHeight = bigBoxSize / 2;
         springHeight = height - floorHeight - floorHeight / 2;
-        
+
         // the cosito is created in the center of the free space
-        cosito = new Cosito(bigBoxSize+((width-bigBoxSize)/2)-width*TAM_BOX_FACTOR/2, width*TAM_BOX_FACTOR);
+        equilibriumPoint = bigBoxSize + ((width - bigBoxSize) / 2) - width * TAM_BOX_FACTOR;
+        cosito = new Cosito(equilibriumPoint, width*TAM_BOX_FACTOR);
         cosito.setLimitX1(bigBoxSize+COMPRESSED_SPRING_FACTOR*width);
-        cosito.setLimitX2(bigBoxSize+STRECHED_SPRING_FACTOR*width);
+        cosito.setLimitX2(2*equilibriumPoint-bigBoxSize);
 
         spring = new Spring(cosito.getTam()/2, 4);
     }
 
     @Override
     public void draw() {
+        long now = System.currentTimeMillis();
+        if (hooking && now - lastTick > 100) {
+            float diff = now - lastTick;
+            float dt = diff /1000.0f;
+            vtfutura = vtfutura(dt, vtfutura, xtfutura);
+            xtfutura = xtfutura(dt, vtfutura, xtfutura);
+            cosito.setX(xtfutura);
+            lastTick = now;
+        }
         drawBackground();
         drawHookeElements();
     }
@@ -86,6 +100,7 @@ public class Hooke extends PApplet {
         super.mousePressed();
         if (mouseX > cosito.getX() && mouseX < cosito.getX() + cosito.getTam() &&
                 mouseY > height - cosito.getTam() - floorHeight && mouseY < height - floorHeight) {
+            hooking = false;
             movingBox = true;
         }
     }
@@ -100,7 +115,13 @@ public class Hooke extends PApplet {
     @Override
     public void mouseReleased() {
         super.mouseReleased();
-        movingBox = false;
+        if (movingBox) {
+            vtfutura = 0;
+            xtfutura = cosito.getX();
+            hooking = true;
+            lastTick = System.currentTimeMillis();
+            movingBox = false;
+        }
     }
 
     @Override
@@ -116,5 +137,16 @@ public class Hooke extends PApplet {
     @Override
     public String sketchRenderer() {
         return A2D;
+    }
+
+    private static final float m = 10;
+    private static final float k = 12;
+
+    private float vtfutura(float dt, float vt, float xt) {
+        return vt - ((dt * k) / m) * (xt - equilibriumPoint);
+    }
+
+    private float xtfutura(float dt, float vt, float xt) {
+        return xt + dt*vtfutura(dt, vt, xt);
     }
 }
