@@ -19,12 +19,15 @@ public final class R {
         public static final int spring=0x7f020005;
     }
     public static final class id {
-        public static final int constant=0x7f040001;
-        public static final int fps=0x7f040002;
-        public static final int mass=0x7f040000;
-        public static final int run=0x7f040003;
+        public static final int constant=0x7f050001;
+        public static final int fps=0x7f050002;
+        public static final int mass=0x7f050000;
+        public static final int run=0x7f050003;
     }
     public static final class layout {
         public static final int main=0x7f030000;
+    }
+    public static final class raw {
+        public static final int smash=0x7f040000;
     }
 }

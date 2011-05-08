@@ -49,6 +49,7 @@ public class Main extends Activity implements View.OnClickListener {
             intent.putExtra(Hooke.MASS, mass);
             intent.putExtra(Hooke.CONSTANT, constant);
             intent.putExtra(Hooke.FPS, fps);
+            System.out.println("constant "+constant);
             startActivity(intent);
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Digitó algo mal o no digitó nada, sonso", Toast.LENGTH_SHORT).show();

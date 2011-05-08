@@ -2,7 +2,11 @@ package co.edu.poligran.hooke;
 
 import android.content.Intent;
 import android.graphics.Color;
-import processing.core.*;
+import android.media.MediaPlayer;
+import processing.core.PApplet;
+import processing.core.PFont;
+import processing.core.PImage;
+import processing.core.PVector;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -12,13 +16,13 @@ public class Hooke extends PApplet {
     private static final String TITLE = "Ley de Hulk!";
     private static final int DEFAULT_MASS = 20;
     private static final float DEFAULT_FPS = 20;
+    private static final float TAM_BIG_BOX_FACTOR = 0.2f;
+    private static final float TAM_BOX_FACTOR = 0.1f;
+    private static final float COMPRESSED_SPRING_FACTOR = 0.05f;
     private static final float DEFAULT_CONSTANT = 12;
 
     private PImage hulk;
     private int textColor;
-    public static final float TAM_BIG_BOX_FACTOR = 0.2f;
-    private static final float TAM_BOX_FACTOR = 0.1f;
-    private static final float COMPRESSED_SPRING_FACTOR = 0.05f;
     private Cosito cosito;
     private Spring spring;
     private float floorHeight;
@@ -26,28 +30,31 @@ public class Hooke extends PApplet {
     private boolean movingBox;
     private float springHeight;
     private float equilibriumPoint;
-    private float xtfutura;
-    private float vtfutura;
+    private float xt;
+    private float vt;
     private boolean hooking;
     private long lastTick;
     public static final String MASS = "mass";
-    public static final String FPS = "fps";
     public static final String CONSTANT = "constant";
+    public static final String FPS = "fps";
     private float mass;
     private float fps;
     private float springConstant;
     private DecimalFormat formatter;
+    private PFont fontLabel;
+    private PFont fontTitle;
+    private MediaPlayer smash;
 
     @Override
     public void setup() {
         Intent intent = getIntent();
         mass = intent.getFloatExtra(MASS, DEFAULT_MASS);
+        springConstant = intent.getFloatExtra(CONSTANT, DEFAULT_CONSTANT);
         fps = intent.getFloatExtra(FPS, DEFAULT_FPS);
-        springConstant = intent.getFloatExtra(FPS, DEFAULT_CONSTANT);
 
         try {
-            PFont font = new PFont(getAssets().open("Chalkduster-48.vlw"));
-            textFont(font);
+            fontLabel = new PFont(getAssets().open("Chalkduster-48.vlw"));
+            fontTitle = new PFont(getAssets().open("Chalkduster-54.vlw"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -59,8 +66,9 @@ public class Hooke extends PApplet {
         springHeight = height - floorHeight - floorHeight / 2;
 
         // the cosito is created in the center of the free space
-        equilibriumPoint = bigBoxSize + ((width - bigBoxSize) / 2) - width * TAM_BOX_FACTOR;
-        cosito = new Cosito(equilibriumPoint, width * TAM_BOX_FACTOR);
+        float tamBox = width * TAM_BOX_FACTOR;
+        equilibriumPoint = bigBoxSize + ((width - bigBoxSize) / 2) - tamBox;
+        cosito = new Cosito(equilibriumPoint, tamBox);
         cosito.setLimitX1(bigBoxSize + COMPRESSED_SPRING_FACTOR * width);
         cosito.setLimitX2(2 * equilibriumPoint - bigBoxSize);
 
@@ -68,6 +76,7 @@ public class Hooke extends PApplet {
 
         formatter = new DecimalFormat("#.#");
         formatter.setMaximumFractionDigits(1);
+        smash = MediaPlayer.create(this, co.edu.poligran.hooke.R.raw.smash);
     }
 
     @Override
@@ -76,9 +85,9 @@ public class Hooke extends PApplet {
         if (hooking && now - lastTick > 1000 / fps) {
             float diff = now - lastTick;
             float dt = diff / 1000.0f;
-            vtfutura = vtfutura(dt, vtfutura, xtfutura);
-            xtfutura = xtfutura(dt, vtfutura, xtfutura);
-            cosito.setX(xtfutura);
+            vt = vt(dt, vt, xt);
+            xt = xt(dt, vt, xt);
+            cosito.setX(xt);
             lastTick = now;
         }
         drawBackground();
@@ -87,12 +96,13 @@ public class Hooke extends PApplet {
     }
 
     private void drawLabels() {
+        textFont(fontLabel);
         fill(Color.LTGRAY);
         textAlign(LEFT);
-        text("m = " + formatter.format(mass)+"kg", 0, 50);
-        text("k = " + formatter.format(springConstant), 0, 100);
-        text("x = " + formatter.format(cosito.getX())+"px", 0, 150);
-        text("v = " + formatter.format(hooking ? vtfutura : 0), 0, 200);
+        text("m = " + formatter.format(mass) + "kg", 5, 50);
+        text("k = " + formatter.format(springConstant), 330, 50);
+        text("x = " + formatter.format(cosito.getX() - equilibriumPoint) + "px", 5, 120);
+        text("v = " + formatter.format(hooking ? vt : 0) + "px/s", 5, 190);
     }
 
     private void drawHookeElements() {
@@ -110,16 +120,19 @@ public class Hooke extends PApplet {
     }
 
     private void drawBackground() {
+        textFont(fontTitle);
         strokeWeight(4);
         background(255);
         fill(textColor);
-        textAlign(CENTER);
-        text(TITLE, width / 2, 50);
+        textAlign(RIGHT);
+        text(TITLE, width - 5, height / 2 - floorHeight);
         image(hulk, bigBoxSize / 2 - hulk.width / 2, height - bigBoxSize - hulk.height, hulk.width, hulk.height);
         noStroke();
         fill(Color.GRAY);
         rect(0, height - bigBoxSize, bigBoxSize, height);
         rect(bigBoxSize, height - floorHeight, width - bigBoxSize, height);
+        stroke(0, 255, 50);
+        line(equilibriumPoint + cosito.getTam() / 2, height - floorHeight + 1, equilibriumPoint + cosito.getTam() / 2, height - floorHeight + 10);
     }
 
     @Override
@@ -143,11 +156,12 @@ public class Hooke extends PApplet {
     public void mouseReleased() {
         super.mouseReleased();
         if (movingBox) {
-            vtfutura = 0;
-            xtfutura = cosito.getX();
+            vt = 0;
+            xt = cosito.getX();
             hooking = true;
             lastTick = System.currentTimeMillis();
             movingBox = false;
+            smash.start();
         }
     }
 
@@ -166,11 +180,11 @@ public class Hooke extends PApplet {
         return A2D;
     }
 
-    private float vtfutura(float dt, float vt, float xt) {
+    private float vt(float dt, float vt, float xt) {
         return vt - ((dt * springConstant) / mass) * (xt - equilibriumPoint);
     }
 
-    private float xtfutura(float dt, float vt, float xt) {
-        return xt + dt * vtfutura(dt, vt, xt);
+    private float xt(float dt, float vt, float xt) {
+        return xt + dt * vt(dt, vt, xt);
     }
 }
