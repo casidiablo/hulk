@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent">
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+    <EditText
+            android:id="@+id/mass"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Masa en kilográmos"
+            android:inputType="numberDecimal"
+            android:drawableRight="@drawable/mass"/>
+    <EditText
+            android:id="@+id/constant"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Constante de elasticidad"
+            android:inputType="numberDecimal"
+            android:drawableRight="@drawable/spring"/>
+    <EditText
+            android:id="@+id/fps"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="FPS (max 30)"
+            android:inputType="numberSigned"
+            android:drawableRight="@drawable/fps"/>
+    <Button
+            android:id="@+id/run"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Ejecutar"/>
 </LinearLayout>

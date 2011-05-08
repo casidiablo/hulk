@@ -3,11 +3,12 @@
           android:versionCode="1" android:versionName="1.0">
     <uses-sdk android:minSdkVersion="7"/>
     <application android:label="Hooke" android:icon="@drawable/icon" android:debuggable="true">
-        <activity android:name=".Hooke">
+        <activity android:label="Hooke" android:name=".Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".Hooke" android:screenOrientation="landscape" android:configChanges="orientation|keyboard"/>
     </application>
 </manifest>
